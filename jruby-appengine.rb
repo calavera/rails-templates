@@ -111,20 +111,24 @@ $LOAD_PATH << 'lib'
 require 'rails'
 BOOT
 
-application_init = "# Set DataMapper to use dm-appengine adapter
-require 'dm-core'
-require 'dm-timestamps'
-require 'dm-validations'
-DataMapper.setup(:default, 'appengine://auto')
-# Set Logger from appengine-apis, all environments
-require 'appengine-apis/logger'
-config.logger = AppEngine::Logger.new
-# Skip frameworks you're not going to use.
-config.frameworks -= [ :active_record, :active_resource, :action_mailer ]"
+application_init = "config.time_zone = 'UTC'
 
-environment = `cat config/environment.rb`
-environment.gsub!(/#.*config\.frameworks.*\]/, application_init)
+  # Set DataMapper to use dm-appengine adapter
+  require 'dm-core'
+  require 'dm-timestamps'
+  require 'dm-validations'
+  DataMapper.setup(:default, 'appengine://auto')
+  # Set Logger from appengine-apis, all environments
+  require 'appengine-apis/logger'
+  config.logger = AppEngine::Logger.new
+  # Skip frameworks you're not going to use.
+  config.frameworks -= [ :active_record, :active_resource, :action_mailer ]"
 
-system("echo \"#{environment}\" > config/environment.rb")
+config_file_name = File.exist?('config/application.rb') ? 'application' : 'environment'
+
+environment = `cat config/#{config_file_name}.rb`
+environment.gsub!(/config\.time_zone = 'UTC'/, application_init)
+
+system("echo \"#{environment}\" > config/#{config_file_name}.rb")
 
 run 'appcfg.rb bundle .'
